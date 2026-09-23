@@ -3,7 +3,8 @@
 import { useTransition } from "react";
 import { goToSleep, wakeUp } from "@/app/actions";
 import { Button } from "@/components/ui/button";
-import { formatRemaining, useNow } from "@/components/use-now";
+import { useNow } from "@/components/use-now";
+import { awakeSince, formatElapsed } from "@/lib/awake";
 import { cn } from "@/lib/utils";
 
 export function AwakeButton({ awakeUntil, serverNow }: { awakeUntil: number | null; serverNow: number }) {
@@ -38,9 +39,9 @@ export function AwakeButton({ awakeUntil, serverNow }: { awakeUntil: number | nu
       <p className="text-center text-sm text-muted-foreground" aria-live="polite">
         {awake ? (
           <>
-            Tu es réveillé·e encore <strong className="text-foreground">{formatRemaining(remaining)}</strong>.
+            Réveillé·e <strong className="text-foreground">{formatElapsed(now - awakeSince(awakeUntil!))}</strong>.
             <br />
-            Appuie à nouveau pour relancer une heure.
+            Appuie à nouveau si tu es toujours réveillé·e.
           </>
         ) : (
           "Appuie pour dire à la coloc que tu es réveillé·e."

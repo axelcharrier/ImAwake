@@ -12,10 +12,9 @@ import {
   requireUser,
   verifyPassword,
 } from "@/lib/auth";
+import { AWAKE_DURATION_MS } from "@/lib/awake";
 
 export type FormState = { error?: string } | undefined;
-
-const AWAKE_DURATION_MS = 60 * 60 * 1000;
 
 export async function login(_: FormState, formData: FormData): Promise<FormState> {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();

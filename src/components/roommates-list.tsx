@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { formatRemaining, useNow } from "@/components/use-now";
+import { useNow } from "@/components/use-now";
+import { awakeSince, formatElapsed } from "@/lib/awake";
 import { cn } from "@/lib/utils";
 
 type Roommate = { id: string; displayName: string; awakeUntil: number | null };
@@ -59,7 +60,7 @@ export function RoommatesList({
               {r.id === currentUserId && <span className="text-muted-foreground"> (toi)</span>}
             </span>
             <span className={cn("text-sm", awake ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
-              {awake ? `☀️ Réveillé·e · ${formatRemaining(remaining)}` : "🌙 Dort"}
+              {awake ? `☀️ Réveillé·e ${formatElapsed(now - awakeSince(r.awakeUntil!))}` : "🌙 Dort"}
             </span>
           </li>
         );
