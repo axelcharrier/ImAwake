@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ImAwake ☀️
 
-## Getting Started
+PWA de coloc : un bouton **ImAwake** passe ton statut en « réveillé·e » pendant 1 h, et tout le monde voit qui est debout.
 
-First, run the development server:
+## Stack
+
+Next.js 16 (App Router, Server Actions) · Supabase (Postgres) + Drizzle ORM · shadcn/ui · auth maison (sessions en base, mots de passe scrypt).
+
+## Démarrer en local
 
 ```bash
+cp .env.example .env.local      # renseigne DATABASE_URL et BOOTSTRAP_TOKEN (openssl rand -hex 24)
+npm install
+npm run db:push                 # crée les tables
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Puis ouvre `http://localhost:3000/invite/<BOOTSTRAP_TOKEN>` pour créer le **premier compte, qui sera admin**.
+Ce lien ne marche que tant que la base ne contient aucun utilisateur.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Inviter la coloc
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`/admin` → **Nouveau lien**. Chaque lien est à usage unique et expire après 7 jours.
+Il n'y a pas d'inscription publique : sans lien valide, impossible de créer un compte.
 
-## Learn More
+## Supabase
 
-To learn more about Next.js, take a look at the following resources:
+L'app utilise Supabase comme base Postgres (connexion directe via Drizzle, pas de clé API nécessaire).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Crée un projet sur [supabase.com](https://supabase.com).
+2. Clique sur le bouton **Connect** en haut du dashboard du projet :
+   - `DATABASE_URL` = *Transaction pooler* (port **6543**) — utilisé par l'app sur Vercel.
+   - `DIRECT_URL` = *Session pooler* (port **5432**) — utilisé seulement par `npm run db:push`.
+   - Ajoute `?sslmode=require` à la fin des deux URLs.
+3. `npm run db:push` crée les tables avec **RLS activée sans policy** : elles sont invisibles
+   depuis l'API publique de Supabase (clé `anon`), seule l'app y accède.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Déployer sur Vercel
 
-## Deploy on Vercel
+1. Ajoute `DATABASE_URL` et `BOOTSTRAP_TOKEN` dans les variables d'environnement du projet Vercel.
+2. Lance `npm run db:push` une fois en local avec les URLs Supabase dans `.env.local`.
+3. Déploie, puis va sur `https://<ton-app>/invite/<BOOTSTRAP_TOKEN>`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Sur téléphone : « Ajouter à l'écran d'accueil » (Safari) ou « Installer l'application » (Chrome).
