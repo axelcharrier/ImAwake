@@ -58,14 +58,19 @@ export async function destroySession() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export const getCurrentUser = cache(async () => {
+export async function getCurrentSessionId() {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  return token ? hashToken(token) : null;
+}
+
+export const getCurrentUser = cache(async () => {
+  const sessionId = await getCurrentSessionId();
+  if (!sessionId) return null;
   const [row] = await db
     .select({ user: users })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
-    .where(and(eq(sessions.id, hashToken(token)), gt(sessions.expiresAt, new Date())))
+    .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())))
     .limit(1);
   return row?.user ?? null;
 });
