@@ -1,18 +1,21 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { refresh } from "next/cache";
 import { and, count, eq, gt, isNull } from "drizzle-orm";
 import { db } from "@/db";
-import { invites, users } from "@/db/schema";
+import { invites, pushSubscriptions, users } from "@/db/schema";
 import {
   createSession,
   destroySession,
+  getCurrentSessionId,
   hashPassword,
   requireUser,
   verifyPassword,
 } from "@/lib/auth";
 import { AWAKE_DURATION_MS } from "@/lib/awake";
+import { notifyOthers } from "@/lib/push";
 
 export type FormState = { error?: string } | undefined;
 
@@ -92,10 +95,21 @@ export async function register(
 
 export async function wakeUp() {
   const user = await requireUser();
+  const wasAwake = !!user.awakeUntil && user.awakeUntil > new Date();
   await db
     .update(users)
     .set({ awakeUntil: new Date(Date.now() + AWAKE_DURATION_MS) })
     .where(eq(users.id, user.id));
+  // Only ping the others when you actually wake up, not when extending your awake window.
+  if (!wasAwake) {
+    after(() =>
+      notifyOthers(user.id, {
+        title: `☀️ ${user.displayName} est réveillé·e`,
+        body: "Viens voir qui est debout dans la coloc.",
+        tag: `awake-${user.id}`,
+      }),
+    );
+  }
   refresh();
 }
 
@@ -103,4 +117,29 @@ export async function goToSleep() {
   const user = await requireUser();
   await db.update(users).set({ awakeUntil: null }).where(eq(users.id, user.id));
   refresh();
+}
+
+export type SerializedPushSubscription = {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+};
+
+export async function savePushSubscription(sub: SerializedPushSubscription) {
+  const user = await requireUser();
+  const sessionId = await getCurrentSessionId();
+  if (!sessionId || !sub?.endpoint?.startsWith("https://") || !sub.keys?.p256dh || !sub.keys?.auth) {
+    throw new Error("Invalid push subscription");
+  }
+  const values = { userId: user.id, sessionId, p256dh: sub.keys.p256dh, auth: sub.keys.auth };
+  await db
+    .insert(pushSubscriptions)
+    .values({ endpoint: sub.endpoint, ...values })
+    .onConflictDoUpdate({ target: pushSubscriptions.endpoint, set: values });
+}
+
+export async function deletePushSubscription(endpoint: string) {
+  const user = await requireUser();
+  await db
+    .delete(pushSubscriptions)
+    .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)));
 }

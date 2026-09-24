@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogOutIcon, ShieldIcon } from "lucide-react";
 import { logout } from "@/app/actions";
+import { PushToggle } from "@/components/push-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { User } from "@/db/schema";
 
@@ -11,6 +12,7 @@ export function AppHeader({ user }: { user: User }) {
         ☀️ ImAwake
       </Link>
       <div className="flex items-center gap-1">
+        <PushToggle />
         {user.isAdmin && (
           <Link href="/admin" className={buttonVariants({ variant: "ghost", size: "sm" })}>
             <ShieldIcon />

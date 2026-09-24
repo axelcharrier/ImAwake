@@ -23,6 +23,16 @@ Ce lien ne marche que tant que la base ne contient aucun utilisateur.
 `/admin` → **Nouveau lien**. Chaque lien est à usage unique et expire après 7 jours.
 Il n'y a pas d'inscription publique : sans lien valide, impossible de créer un compte.
 
+## Notifications push
+
+Quand quelqu'un se réveille (pas quand il ré-appuie pour prolonger), les autres reçoivent une notif.
+Chacun l'active avec la cloche 🔔 en haut de l'écran ; se déconnecter coupe les notifs de l'appareil.
+
+1. `npx web-push generate-vapid-keys` puis renseigne `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
+   et `VAPID_SUBJECT` dans `.env.local` (et sur Vercel). Garde les mêmes clés : en changer invalide les abonnements.
+2. Sur iPhone, les notifs ne marchent que depuis l'app **ajoutée à l'écran d'accueil** (iOS 16.4+) :
+   la cloche n'apparaît pas dans Safari.
+
 ## Supabase
 
 L'app utilise Supabase comme base Postgres (connexion directe via Drizzle, pas de clé API nécessaire).
@@ -37,7 +47,7 @@ L'app utilise Supabase comme base Postgres (connexion directe via Drizzle, pas d
 
 ## Déployer sur Vercel
 
-1. Ajoute `DATABASE_URL` et `BOOTSTRAP_TOKEN` dans les variables d'environnement du projet Vercel.
+1. Ajoute `DATABASE_URL`, `BOOTSTRAP_TOKEN` et les variables `VAPID_*` dans les variables d'environnement du projet Vercel.
 2. Lance `npm run db:push` une fois en local avec les URLs Supabase dans `.env.local`.
 3. Déploie, puis va sur `https://<ton-app>/invite/<BOOTSTRAP_TOKEN>`.
 
